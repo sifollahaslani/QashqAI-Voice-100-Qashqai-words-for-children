@@ -1,0 +1,1 @@
+# QashqAI-Voice-100-Qashqai-words-for-children
