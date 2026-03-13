@@ -1,399 +1,300 @@
+<!DOCTYPE html>
+<html lang="tr" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QashqAI Voice - 100 Qashqai Words</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: Arial, sans-serif;
+    background: linear-gradient(135deg, #1a0a00, #3d1a00);
+    min-height: 100vh;
+    color: white;
+    padding: 20px;
+  }
+  header {
+    text-align: center;
+    padding: 30px 20px;
+    border-bottom: 2px solid #c8860a;
+    margin-bottom: 30px;
+  }
+  header h1 {
+    font-size: 2em;
+    color: #f0a500;
+    margin-bottom: 8px;
+  }
+  header p {
+    color: #ccc;
+    font-size: 0.95em;
+  }
+  .search-box {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+  .search-box input {
+    width: 100%;
+    max-width: 500px;
+    padding: 12px 20px;
+    border-radius: 30px;
+    border: 2px solid #c8860a;
+    background: rgba(255,255,255,0.1);
+    color: white;
+    font-size: 1em;
+    outline: none;
+  }
+  .search-box input::placeholder { color: #aaa; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 16px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .card {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid #c8860a44;
+    border-radius: 14px;
+    padding: 18px;
+    text-align: center;
+    transition: transform 0.2s, background 0.2s;
+    cursor: pointer;
+  }
+  .card:hover {
+    background: rgba(200,134,10,0.2);
+    transform: translateY(-3px);
+  }
+  .card .number {
+    font-size: 0.75em;
+    color: #c8860a;
+    margin-bottom: 6px;
+  }
+  .card .qashqai {
+    font-size: 1.4em;
+    font-weight: bold;
+    color: #f0a500;
+    margin-bottom: 6px;
+  }
+  .card .persian {
+    font-size: 0.9em;
+    color: #ddd;
+    margin-bottom: 4px;
+    direction: rtl;
+  }
+  .card .german {
+    font-size: 0.85em;
+    color: #aaa;
+    margin-bottom: 4px;
+  }
+  .card .english {
+    font-size: 0.8em;
+    color: #888;
+    margin-bottom: 12px;
+  }
+  .speak-btn {
+    background: linear-gradient(135deg, #c8860a, #f0a500);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    color: white;
+    font-size: 0.9em;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.2s;
+  }
+  .speak-btn:hover { opacity: 0.85; }
+  .speak-btn:active { opacity: 0.7; }
+  .speak-btn.playing {
+    background: linear-gradient(135deg, #0a8c4a, #0fc96d);
+  }
+  footer {
+    text-align: center;
+    margin-top: 50px;
+    padding: 20px;
+    color: #888;
+    font-size: 0.85em;
+    border-top: 1px solid #c8860a44;
+  }
+  footer span { color: #f0a500; }
+</style>
+</head>
+<body>
 
+<header>
+  <h1>🎙️ QashqAI Voice</h1>
+  <p>100 Qashqai Words for Children | ۱۰۰ کلمه قشقایی برای کودکان</p>
+  <p style="margin-top:6px; font-size:0.85em; color:#c8860a;">🔊 Press the button to hear the word | دکمه را فشار دهید تا صدا را بشنوید</p>
+</header>
 
+<div class="search-box">
+  <input type="text" id="searchInput" placeholder="🔍 Search / جستجو / Suche..." oninput="filterWords()">
+</div>
+
+<div class="grid" id="wordGrid"></div>
+
+<footer>
+  <p>© 2025 <span>QashqAI Voice</span> — Preserving the Qashqai Language through Ethical AI</p>
+  <p style="margin-top:6px;">🌍 qashqaivoice.com</p>
+</footer>
+
+<script>
 const words = [
-  { id:1,  q:"آتا",      p:"ata",       fa:"پدر",          de:"Vater",        en:"Father",        e:"👨",  cat:"خانواده" },
-  { id:2,  q:"آنا",      p:"ana",       fa:"مادر",         de:"Mutter",       en:"Mother",        e:"👩",  cat:"خانواده" },
-  { id:3,  q:"قارداش",   p:"gardash",   fa:"برادر",        de:"Bruder",       en:"Brother",       e:"👦",  cat:"خانواده" },
-  { id:4,  q:"باجی",     p:"baji",      fa:"خواهر",        de:"Schwester",    en:"Sister",        e:"👧",  cat:"خانواده" },
-  { id:5,  q:"اوغول",    p:"oghul",     fa:"پسر",          de:"Sohn",         en:"Son",           e:"👦",  cat:"خانواده" },
-  { id:6,  q:"قیز",      p:"qiz",       fa:"دختر",         de:"Tochter",      en:"Daughter",      e:"👧",  cat:"خانواده" },
-  { id:7,  q:"ددا",      p:"deda",      fa:"پدربزرگ",      de:"Großvater",    en:"Grandfather",   e:"👴",  cat:"خانواده" },
-  { id:8,  q:"نَنَ",     p:"nene",      fa:"مادربزرگ",     de:"Großmutter",   en:"Grandmother",   e:"👵",  cat:"خانواده" },
-  { id:9,  q:"اِشک",     p:"eshk",      fa:"دوست",         de:"Freund",       en:"Friend",        e:"🤝",  cat:"خانواده" },
-  { id:10, q:"ائل",      p:"el",        fa:"قوم/عشیره",    de:"Stamm",        en:"Tribe",         e:"🏕️", cat:"خانواده" },
-  { id:11, q:"آروادام",  p:"arvadam",   fa:"همسر",         de:"Ehepartner",   en:"Spouse",        e:"💑",  cat:"خانواده" },
-  { id:12, q:"اوشاق",    p:"ushaq",     fa:"بچه",          de:"Kind",         en:"Child",         e:"👶",  cat:"خانواده" },
-  { id:13, q:"داغ",      p:"dagh",      fa:"کوه",          de:"Berg",         en:"Mountain",      e:"⛰️", cat:"طبیعت" },
-  { id:14, q:"سو",       p:"su",        fa:"آب",           de:"Wasser",       en:"Water",         e:"💧",  cat:"طبیعت" },
-  { id:15, q:"اوت",      p:"od",        fa:"آتش",          de:"Feuer",        en:"Fire",          e:"🔥",  cat:"طبیعت" },
-  { id:16, q:"یئر",      p:"yer",       fa:"زمین",         de:"Erde",         en:"Earth",         e:"🌍",  cat:"طبیعت" },
-  { id:17, q:"گؤی",      p:"goy",       fa:"آسمان",        de:"Himmel",       en:"Sky",           e:"🌤️", cat:"طبیعت" },
-  { id:18, q:"یول",      p:"yol",       fa:"راه",          de:"Weg",          en:"Road",          e:"🛤️", cat:"طبیعت" },
-  { id:19, q:"اورمان",   p:"orman",     fa:"جنگل",         de:"Wald",         en:"Forest",        e:"🌲",  cat:"طبیعت" },
-  { id:20, q:"چای",      p:"chay",      fa:"رود/نهر",      de:"Fluss",        en:"River",         e:"🏞️", cat:"طبیعت" },
-  { id:21, q:"یاغیش",    p:"yaghish",   fa:"باران",        de:"Regen",        en:"Rain",          e:"🌧️", cat:"طبیعت" },
-  { id:22, q:"قار",      p:"qar",       fa:"برف",          de:"Schnee",       en:"Snow",          e:"❄️",  cat:"طبیعت" },
-  { id:23, q:"کول",      p:"kol",       fa:"دریاچه",       de:"See",          en:"Lake",          e:"🏔️", cat:"طبیعت" },
-  { id:24, q:"چیچک",     p:"chichek",   fa:"گل",           de:"Blume",        en:"Flower",        e:"🌸",  cat:"طبیعت" },
-  { id:25, q:"تاش",      p:"tash",      fa:"سنگ",          de:"Stein",        en:"Stone",         e:"🪨",  cat:"طبیعت" },
-  { id:26, q:"آت",       p:"at",        fa:"اسب",          de:"Pferd",        en:"Horse",         e:"🐴",  cat:"حیوانات" },
-  { id:27, q:"قوزو",     p:"quzu",      fa:"بره",          de:"Lamm",         en:"Lamb",          e:"🐑",  cat:"حیوانات" },
-  { id:28, q:"قوش",      p:"qush",      fa:"پرنده",        de:"Vogel",        en:"Bird",          e:"🐦",  cat:"حیوانات" },
-  { id:29, q:"ایت",      p:"it",        fa:"سگ",           de:"Hund",         en:"Dog",           e:"🐕",  cat:"حیوانات" },
-  { id:30, q:"پیشیک",    p:"pishik",    fa:"گربه",         de:"Katze",        en:"Cat",           e:"🐈",  cat:"حیوانات" },
-  { id:31, q:"اینک",     p:"inek",      fa:"گاو",          de:"Kuh",          en:"Cow",           e:"🐄",  cat:"حیوانات" },
-  { id:32, q:"کچی",      p:"kechi",     fa:"بز",           de:"Ziege",        en:"Goat",          e:"🐐",  cat:"حیوانات" },
-  { id:33, q:"قوید",     p:"qoyun",     fa:"گوسفند",       de:"Schaf",        en:"Sheep",         e:"🐏",  cat:"حیوانات" },
-  { id:34, q:"ایلان",    p:"ilan",      fa:"مار",          de:"Schlange",     en:"Snake",         e:"🐍",  cat:"حیوانات" },
-  { id:35, q:"آیی",      p:"ayi",       fa:"خرس",          de:"Bär",          en:"Bear",          e:"🐻",  cat:"حیوانات" },
-  { id:36, q:"توشان",    p:"tovshan",   fa:"خرگوش",        de:"Hase",         en:"Rabbit",        e:"🐇",  cat:"حیوانات" },
-  { id:37, q:"شاهین",    p:"shahin",    fa:"شاهین/عقاب",   de:"Falke",        en:"Falcon",        e:"🦅",  cat:"حیوانات" },
-  { id:38, q:"بالیق",    p:"baliq",     fa:"ماهی",         de:"Fisch",        en:"Fish",          e:"🐟",  cat:"حیوانات" },
-  { id:39, q:"آری",      p:"ari",       fa:"زنبور عسل",    de:"Biene",        en:"Bee",           e:"🐝",  cat:"حیوانات" },
-  { id:40, q:"اِو",      p:"ev",        fa:"خانه/خیمه",    de:"Haus/Zelt",    en:"Home/Tent",     e:"🏠",  cat:"زندگی" },
-  { id:41, q:"نان",      p:"nan",       fa:"نان",          de:"Brot",         en:"Bread",         e:"🍞",  cat:"زندگی" },
-  { id:42, q:"اِت",      p:"et",        fa:"گوشت",         de:"Fleisch",      en:"Meat",          e:"🥩",  cat:"زندگی" },
-  { id:43, q:"سود",      p:"sud",       fa:"شیر",          de:"Milch",        en:"Milk",          e:"🥛",  cat:"زندگی" },
-  { id:44, q:"یاغ",      p:"yagh",      fa:"روغن",         de:"Öl/Butter",    en:"Butter/Oil",    e:"🧈",  cat:"زندگی" },
-  { id:45, q:"دوز",      p:"duz",       fa:"نمک",          de:"Salz",         en:"Salt",          e:"🧂",  cat:"زندگی" },
-  { id:46, q:"پالاز",    p:"palaz",     fa:"قالیچه",       de:"Teppich",      en:"Rug",           e:"🎨",  cat:"زندگی" },
-  { id:47, q:"اوجاق",    p:"ojaq",      fa:"اجاق/کانون",   de:"Herd/Kamin",   en:"Hearth",        e:"🔥",  cat:"زندگی" },
-  { id:48, q:"قاپی",     p:"qapi",      fa:"در",           de:"Tür",          en:"Door",          e:"🚪",  cat:"زندگی" },
-  { id:49, q:"کؤچ",      p:"koch",      fa:"کوچ",          de:"Wanderung",    en:"Migration",     e:"🚶",  cat:"زندگی" },
-  { id:50, q:"چاتیر",    p:"chadir",    fa:"چادر",         de:"Zelt",         en:"Tent",          e:"⛺",  cat:"زندگی" },
-  { id:51, q:"اوخ",      p:"ox",        fa:"تیر/پیکان",    de:"Pfeil",        en:"Arrow",         e:"🏹",  cat:"زندگی" },
-  { id:52, q:"پول",      p:"pul",       fa:"پول",          de:"Geld",         en:"Money",         e:"💰",  cat:"زندگی" },
-  { id:53, q:"گوز",      p:"goz",       fa:"چشم",          de:"Auge",         en:"Eye",           e:"👁️", cat:"زندگی" },
-  { id:54, q:"ال",       p:"el",        fa:"دست",          de:"Hand",         en:"Hand",          e:"✋",  cat:"زندگی" },
-  { id:55, q:"سئو",      p:"sev",       fa:"عشق",          de:"Liebe",        en:"Love",          e:"❤️",  cat:"احساسات" },
-  { id:56, q:"سئوینج",   p:"sevinj",    fa:"شادی",         de:"Freude",       en:"Joy",           e:"😊",  cat:"احساسات" },
-  { id:57, q:"قورخو",    p:"qorkhu",    fa:"ترس",          de:"Angst",        en:"Fear",          e:"😨",  cat:"احساسات" },
-  { id:58, q:"قم",       p:"qam",       fa:"غم",           de:"Trauer",       en:"Sadness",       e:"😢",  cat:"احساسات" },
-  { id:59, q:"قزب",      p:"qazab",     fa:"خشم",          de:"Wut",          en:"Anger",         e:"😠",  cat:"احساسات" },
-  { id:60, q:"آرزو",     p:"arzu",      fa:"آرزو",         de:"Wunsch",       en:"Wish",          e:"🌟",  cat:"احساسات" },
-  { id:61, q:"اومود",    p:"umud",      fa:"امید",         de:"Hoffnung",     en:"Hope",          e:"✨",  cat:"احساسات" },
-  { id:62, q:"یاخشی",    p:"yakhshi",   fa:"خوب",          de:"Gut",          en:"Good",          e:"👍",  cat:"احساسات" },
-  { id:63, q:"پیس",      p:"pis",       fa:"بد",           de:"Schlecht",     en:"Bad",           e:"👎",  cat:"احساسات" },
-  { id:64, q:"گوزل",     p:"guzel",     fa:"زیبا",         de:"Schön",        en:"Beautiful",     e:"✨",  cat:"احساسات" },
-  { id:65, q:"اورک",     p:"urek",      fa:"قلب",          de:"Herz",         en:"Heart",         e:"💗",  cat:"احساسات" },
-  { id:66, q:"گون",      p:"gun",       fa:"روز/خورشید",   de:"Tag/Sonne",    en:"Day/Sun",       e:"☀️",  cat:"زمان" },
-  { id:67, q:"گئجه",     p:"geje",      fa:"شب",           de:"Nacht",        en:"Night",         e:"🌙",  cat:"زمان" },
-  { id:68, q:"آی",       p:"ay",        fa:"ماه",          de:"Mond/Monat",   en:"Moon/Month",    e:"🌕",  cat:"زمان" },
-  { id:69, q:"یاز",      p:"yaz",       fa:"تابستان",      de:"Sommer",       en:"Summer",        e:"🌻",  cat:"زمان" },
-  { id:70, q:"قیش",      p:"qish",      fa:"زمستان",       de:"Winter",       en:"Winter",        e:"❄️",  cat:"زمان" },
-  { id:71, q:"یاییم",    p:"yayim",     fa:"بهار",         de:"Frühling",     en:"Spring",        e:"🌱",  cat:"زمان" },
-  { id:72, q:"پاییز",    p:"payiz",     fa:"پاییز",        de:"Herbst",       en:"Autumn",        e:"🍂",  cat:"زمان" },
-  { id:73, q:"سابا",     p:"sabah",     fa:"صبح/فردا",     de:"Morgen",       en:"Morning",       e:"🌅",  cat:"زمان" },
-  { id:74, q:"آخشام",    p:"akhsham",   fa:"غروب/شب",      de:"Abend",        en:"Evening",       e:"🌆",  cat:"زمان" },
-  { id:75, q:"ایندی",    p:"indi",      fa:"الان",         de:"Jetzt",        en:"Now",           e:"⏰",  cat:"زمان" },
-  { id:76, q:"قیرمیزی",  p:"qirmizi",   fa:"قرمز",         de:"Rot",          en:"Red",           e:"🔴",  cat:"رنگها" },
-  { id:77, q:"گؤی",      p:"goy",       fa:"آبی",          de:"Blau",         en:"Blue",          e:"🔵",  cat:"رنگها" },
-  { id:78, q:"یاشیل",    p:"yashil",    fa:"سبز",          de:"Grün",         en:"Green",         e:"🟢",  cat:"رنگها" },
-  { id:79, q:"ساری",     p:"sari",      fa:"زرد",          de:"Gelb",         en:"Yellow",        e:"🟡",  cat:"رنگها" },
-  { id:80, q:"آغ",       p:"agh",       fa:"سفید",         de:"Weiß",         en:"White",         e:"⚪",  cat:"رنگها" },
-  { id:81, q:"قارا",     p:"qara",      fa:"سیاه",         de:"Schwarz",      en:"Black",         e:"⚫",  cat:"رنگها" },
-  { id:82, q:"قهوهیی",   p:"qahveyi",   fa:"قهوه‌ای",      de:"Braun",        en:"Brown",         e:"🟤",  cat:"رنگها" },
-  { id:83, q:"نارینجی",  p:"naranji",   fa:"نارنجی",       de:"Orange",       en:"Orange",        e:"🟠",  cat:"رنگها" },
-  { id:84, q:"بیر",      p:"bir",       fa:"یک",           de:"Eins",         en:"One",           e:"1️⃣", cat:"اعداد" },
-  { id:85, q:"ایکی",     p:"iki",       fa:"دو",           de:"Zwei",         en:"Two",           e:"2️⃣", cat:"اعداد" },
-  { id:86, q:"اوچ",      p:"uch",       fa:"سه",           de:"Drei",         en:"Three",         e:"3️⃣", cat:"اعداد" },
-  { id:87, q:"دؤرد",     p:"dord",      fa:"چهار",         de:"Vier",         en:"Four",          e:"4️⃣", cat:"اعداد" },
-  { id:88, q:"بئش",      p:"besh",      fa:"پنج",          de:"Fünf",         en:"Five",          e:"5️⃣", cat:"اعداد" },
-  { id:89, q:"آلتی",     p:"alti",      fa:"شش",           de:"Sechs",        en:"Six",           e:"6️⃣", cat:"اعداد" },
-  { id:90, q:"یئددی",    p:"yeddi",     fa:"هفت",          de:"Sieben",       en:"Seven",         e:"7️⃣", cat:"اعداد" },
-  { id:91, q:"سکیز",     p:"sekkiz",    fa:"هشت",          de:"Acht",         en:"Eight",         e:"8️⃣", cat:"اعداد" },
-  { id:92, q:"دوققوز",   p:"doqquz",    fa:"نه",           de:"Neun",         en:"Nine",          e:"9️⃣", cat:"اعداد" },
-  { id:93, q:"اون",      p:"on",        fa:"ده",           de:"Zehn",         en:"Ten",           e:"🔟",  cat:"اعداد" },
-  { id:94, q:"یوز",      p:"yuz",       fa:"صد",           de:"Hundert",      en:"Hundred",       e:"💯",  cat:"اعداد" },
-  { id:95, q:"مین",      p:"min",       fa:"هزار",         de:"Tausend",      en:"Thousand",      e:"🔢",  cat:"اعداد" },
-  { id:96, q:"دیل",      p:"dil",       fa:"زبان",         de:"Sprache",      en:"Language",      e:"👅",  cat:"زندگی" },
-  { id:97, q:"سس",       p:"ses",       fa:"صدا",          de:"Stimme",       en:"Voice",         e:"🔊",  cat:"زندگی" },
-  { id:98, q:"باش",      p:"bash",      fa:"سر",           de:"Kopf",         en:"Head",          e:"🗣️", cat:"زندگی" },
-  { id:99, q:"آیاق",     p:"ayaq",      fa:"پا",           de:"Fuß",          en:"Foot",          e:"🦶",  cat:"زندگی" },
-  { id:100,q:"یول داشی", p:"yol dashi", fa:"همراه راه",    de:"Weggefährte",  en:"Fellow Traveler",e:"🤝", cat:"زندگی" },
+  {q:"Ana",p:"مادر",g:"Mutter",e:"Mother"},
+  {q:"Ata",p:"پدر",g:"Vater",e:"Father"},
+  {q:"Su",p:"آب",g:"Wasser",e:"Water"},
+  {q:"Od",p:"آتش",g:"Feuer",e:"Fire"},
+  {q:"Torpaq",p:"خاک/زمین",g:"Erde",e:"Earth"},
+  {q:"Göy",p:"آسمان",g:"Himmel",e:"Sky"},
+  {q:"Günəş",p:"خورشید",g:"Sonne",e:"Sun"},
+  {q:"Ay",p:"ماه",g:"Mond",e:"Moon"},
+  {q:"Ulduz",p:"ستاره",g:"Stern",e:"Star"},
+  {q:"Dağ",p:"کوه",g:"Berg",e:"Mountain"},
+  {q:"Çay",p:"رودخانه",g:"Fluss",e:"River"},
+  {q:"Ağac",p:"درخت",g:"Baum",e:"Tree"},
+  {q:"Çiçək",p:"گل",g:"Blume",e:"Flower"},
+  {q:"Ot",p:"علف",g:"Gras",e:"Grass"},
+  {q:"Daş",p:"سنگ",g:"Stein",e:"Stone"},
+  {q:"Qar",p:"برف",g:"Schnee",e:"Snow"},
+  {q:"Yağış",p:"باران",g:"Regen",e:"Rain"},
+  {q:"Külək",p:"باد",g:"Wind",e:"Wind"},
+  {q:"İşıq",p:"نور",g:"Licht",e:"Light"},
+  {q:"Gecə",p:"شب",g:"Nacht",e:"Night"},
+  {q:"Gündüz",p:"روز",g:"Tag",e:"Day"},
+  {q:"Səhər",p:"صبح",g:"Morgen",e:"Morning"},
+  {q:"Axşam",p:"شام/غروب",g:"Abend",e:"Evening"},
+  {q:"Ev",p:"خانه",g:"Haus",e:"House"},
+  {q:"Qapı",p:"در",g:"Tür",e:"Door"},
+  {q:"Pəncərə",p:"پنجره",g:"Fenster",e:"Window"},
+  {q:"Yol",p:"راه",g:"Weg",e:"Road"},
+  {q:"Körpü",p:"پل",g:"Brücke",e:"Bridge"},
+  {q:"Çadır",p:"چادر/خیمه",g:"Zelt",e:"Tent"},
+  {q:"Ocaq",p:"اجاق",g:"Herd",e:"Hearth"},
+  {q:"At",p:"اسب",g:"Pferd",e:"Horse"},
+  {q:"İnək",p:"گاو",g:"Kuh",e:"Cow"},
+  {q:"Qoyun",p:"گوسفند",g:"Schaf",e:"Sheep"},
+  {q:"Keçi",p:"بز",g:"Ziege",e:"Goat"},
+  {q:"It",p:"سگ",g:"Hund",e:"Dog"},
+  {q:"Pişik",p:"گربه",g:"Katze",e:"Cat"},
+  {q:"Quş",p:"پرنده",g:"Vogel",e:"Bird"},
+  {q:"Balıq",p:"ماهی",g:"Fisch",e:"Fish"},
+  {q:"Aslan",p:"شیر",g:"Löwe",e:"Lion"},
+  {q:"Ayı",p:"خرس",g:"Bär",e:"Bear"},
+  {q:"Ağız",p:"دهان",g:"Mund",e:"Mouth"},
+  {q:"Göz",p:"چشم",g:"Auge",e:"Eye"},
+  {q:"Qulaq",p:"گوش",g:"Ohr",e:"Ear"},
+  {q:"Burun",p:"بینی",g:"Nase",e:"Nose"},
+  {q:"Əl",p:"دست",g:"Hand",e:"Hand"},
+  {q:"Ayaq",p:"پا",g:"Fuß",e:"Foot"},
+  {q:"Baş",p:"سر",g:"Kopf",e:"Head"},
+  {q:"Ürək",p:"قلب",g:"Herz",e:"Heart"},
+  {q:"Saç",p:"مو",g:"Haar",e:"Hair"},
+  {q:"Üz",p:"صورت",g:"Gesicht",e:"Face"},
+  {q:"Çörək",p:"نان",g:"Brot",e:"Bread"},
+  {q:"Süd",p:"شیر",g:"Milch",e:"Milk"},
+  {q:"Et",p:"گوشت",g:"Fleisch",e:"Meat"},
+  {q:"Meyvə",p:"میوه",g:"Obst",e:"Fruit"},
+  {q:"Alma",p:"سیب",g:"Apfel",e:"Apple"},
+  {q:"Üzüm",p:"انگور",g:"Traube",e:"Grape"},
+  {q:"Bal",p:"عسل",g:"Honig",e:"Honey"},
+  {q:"Duz",p:"نمک",g:"Salz",e:"Salt"},
+  {q:"Yağ",p:"روغن",g:"Öl/Fett",e:"Oil/Fat"},
+  {q:"Çay",p:"چای",g:"Tee",e:"Tea"},
+  {q:"Bir",p:"یک",g:"Eins",e:"One"},
+  {q:"İki",p:"دو",g:"Zwei",e:"Two"},
+  {q:"Üç",p:"سه",g:"Drei",e:"Three"},
+  {q:"Dörd",p:"چهار",g:"Vier",e:"Four"},
+  {q:"Beş",p:"پنج",g:"Fünf",e:"Five"},
+  {q:"Altı",p:"شش",g:"Sechs",e:"Six"},
+  {q:"Yeddi",p:"هفت",g:"Sieben",e:"Seven"},
+  {q:"Səkkiz",p:"هشت",g:"Acht",e:"Eight"},
+  {q:"Doqquz",p:"نه",g:"Neun",e:"Nine"},
+  {q:"On",p:"ده",g:"Zehn",e:"Ten"},
+  {q:"Böyük",p:"بزرگ",g:"Groß",e:"Big"},
+  {q:"Kiçik",p:"کوچک",g:"Klein",e:"Small"},
+  {q:"Yaxşı",p:"خوب",g:"Gut",e:"Good"},
+  {q:"Pis",p:"بد",g:"Schlecht",e:"Bad"},
+  {q:"İsti",p:"گرم",g:"Warm",e:"Warm"},
+  {q:"Soyuq",p:"سرد",g:"Kalt",e:"Cold"},
+  {q:"Yeni",p:"جدید",g:"Neu",e:"New"},
+  {q:"Köhnə",p:"قدیمی",g:"Alt",e:"Old"},
+  {q:"Gəl",p:"بیا",g:"Komm",e:"Come"},
+  {q:"Get",p:"برو",g:"Geh",e:"Go"},
+  {q:"Otur",p:"بنشین",g:"Sitz",e:"Sit"},
+  {q:"Dur",p:"بایست",g:"Steh auf",e:"Stand"},
+  {q:"Ye",p:"بخور",g:"Iss",e:"Eat"},
+  {q:"İç",p:"بنوش",g:"Trink",e:"Drink"},
+  {q:"Uyu",p:"بخواب",g:"Schlaf",e:"Sleep"},
+  {q:"Qaç",p:"بدو",g:"Lauf",e:"Run"},
+  {q:"Sev",p:"دوست بدار",g:"Liebe",e:"Love"},
+  {q:"Güldü",p:"خندید",g:"Lachte",e:"Laughed"},
+  {q:"Ağladı",p:"گریست",g:"Weinte",e:"Cried"},
+  {q:"Oxu",p:"بخوان",g:"Lies",e:"Read"},
+  {q:"Yaz",p:"بنویس",g:"Schreib",e:"Write"},
+  {q:"Oyna",p:"بازی کن",g:"Spiel",e:"Play"},
+  {q:"Salam",p:"سلام",g:"Hallo",e:"Hello"},
+  {q:"Xudafiz",p:"خداحافظ",g:"Tschüss",e:"Goodbye"},
+  {q:"Bəli",p:"بله",g:"Ja",e:"Yes"},
+  {q:"Xeyr",p:"نه",g:"Nein",e:"No"},
+  {q:"Sağ ol",p:"ممنون",g:"Danke",e:"Thank you"},
+  {q:"Sevgi",p:"عشق",g:"Liebe",e:"Love"},
+  {q:"Azadlıq",p:"آزادی",g:"Freiheit",e:"Freedom"},
+  {q:"Dil",p:"زبان",g:"Sprache",e:"Language"}
 ];
 
-const cats = ["همه","خانواده","طبیعت","حیوانات","زندگی","احساسات","زمان","رنگها","اعداد"];
-
-function speak(text, onEnd) {
-  if (!window.speechSynthesis) return;
-  window.speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  const voices = window.speechSynthesis.getVoices();
-  const tr = voices.find(v => v.lang.startsWith("tr") || v.lang.startsWith("az"));
-  if (tr) u.voice = tr;
-  u.lang = "tr-TR";
-  u.rate = 0.82;
-  u.pitch = 1.0;
-  if (onEnd) u.onend = onEnd;
-  window.speechSynthesis.speak(u);
+function speak(word, btn) {
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(word);
+    utter.lang = 'tr-TR';
+    utter.rate = 0.85;
+    utter.pitch = 1;
+    btn.classList.add('playing');
+    btn.textContent = '🔊 Playing...';
+    utter.onend = () => {
+      btn.classList.remove('playing');
+      btn.textContent = '▶ Listen / بشنو';
+    };
+    utter.onerror = () => {
+      btn.classList.remove('playing');
+      btn.textContent = '▶ Listen / بشنو';
+    };
+    window.speechSynthesis.speak(utter);
+  } else {
+    alert('Your browser does not support text-to-speech.');
+  }
 }
 
-export default function App() {
-  const [cat, setCat] = useState("همه");
-  const [view, setView] = useState("grid");
-  const [idx, setIdx] = useState(0);
-  const [flipped, setFlipped] = useState(false);
-  const [speaking, setSpeaking] = useState(null);
-  const [score, setScore] = useState(0);
-  const [opts, setOpts] = useState([]);
-  const [answered, setAnswered] = useState(false);
-  const [chosen, setChosen] = useState(null);
-  const [search, setSearch] = useState("");
-  const [voicesReady, setVoicesReady] = useState(false);
+function renderCards(list) {
+  const grid = document.getElementById('wordGrid');
+  grid.innerHTML = '';
+  list.forEach((w, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `
+      <div class="number">#${words.indexOf(w)+1}</div>
+      <div class="qashqai">${w.q}</div>
+      <div class="persian">${w.p}</div>
+      <div class="german">🇩🇪 ${w.g}</div>
+      <div class="english">🇬🇧 ${w.e}</div>
+      <button class="speak-btn" onclick="speak('${w.q}', this)">▶ Listen / بشنو</button>
+    `;
+    grid.appendChild(card);
+  });
+}
 
-  useEffect(() => {
-    const load = () => setVoicesReady(true);
-    window.speechSynthesis.onvoiceschanged = load;
-    if (window.speechSynthesis.getVoices().length > 0) setVoicesReady(true);
-  }, []);
-
+function filterWords() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
   const filtered = words.filter(w =>
-    (cat === "همه" || w.cat === cat) &&
-    (search === "" || w.q.includes(search) || w.fa.includes(search) ||
-     w.en.toLowerCase().includes(search.toLowerCase()) || w.p.toLowerCase().includes(search.toLowerCase()))
+    w.q.toLowerCase().includes(q) ||
+    w.p.includes(q) ||
+    w.g.toLowerCase().includes(q) ||
+    w.e.toLowerCase().includes(q)
   );
-
-  const cur = filtered[idx % Math.max(filtered.length, 1)] || words[0];
-
-  const makeOpts = (word) => {
-    const pool = words.filter(w => w.id !== word.id).sort(() => Math.random() - 0.5).slice(0, 3);
-    setOpts([...pool, word].sort(() => Math.random() - 0.5));
-    setAnswered(false);
-    setChosen(null);
-  };
-
-  const doSpeak = (word, e) => {
-    if (e) e.stopPropagation();
-    setSpeaking(word.id);
-    speak(word.p, () => setSpeaking(null));
-  };
-
-  const next = () => {
-    const ni = (idx + 1) % filtered.length;
-    setIdx(ni);
-    setFlipped(false);
-    if (view === "quiz") makeOpts(filtered[ni] || words[0]);
-  };
-
-  const prev = () => {
-    const pi = (idx - 1 + filtered.length) % filtered.length;
-    setIdx(pi);
-    setFlipped(false);
-    if (view === "quiz") makeOpts(filtered[pi] || words[0]);
-  };
-
-  const switchView = (v) => {
-    setView(v);
-    setIdx(0);
-    setFlipped(false);
-    if (v === "quiz") makeOpts(filtered[0] || words[0]);
-  };
-
-  const switchCat = (c) => {
-    setCat(c);
-    setIdx(0);
-    setFlipped(false);
-    setSearch("");
-  };
-
-  const answer = (opt) => {
-    if (answered) return;
-    setChosen(opt.id);
-    setAnswered(true);
-    if (opt.id === cur.id) setScore(s => s + 1);
-    speak(cur.p);
-  };
-
-  return (
-    <div style={{
-      fontFamily: "'Vazirmatn', 'Segoe UI', sans-serif",
-      background: "#fdf6ec",
-      minHeight: "100vh",
-      direction: "rtl",
-      color: "#2d1a08"
-    }}>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;600;700;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        button { cursor: pointer; font-family: inherit; border: none; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; }
-        .wcard { background: white; border-radius: 16px; border: 1.5px solid #e8d5b8; padding: 14px 12px; text-align: center; box-shadow: 0 3px 16px rgba(107,61,30,.1); transition: all .2s; }
-        .wcard:hover { transform: translateY(-3px); box-shadow: 0 8px 28px rgba(107,61,30,.18); border-color: #c68a2e; }
-        .speak-btn { display:flex; align-items:center; justify-content:center; width:32px; height:32px; border-radius:50%; background:#f7ede0; border:1.5px solid #e8d5b8; color:#6b3d1e; font-size:13px; transition:all .18s; }
-        .speak-btn:hover { background:#c68a2e; color:white; border-color:#c68a2e; transform:scale(1.1); }
-        .speak-btn.on { background:#d62b23; color:white; border-color:#d62b23; animation: pulse .5s infinite alternate; }
-        @keyframes pulse { from{transform:scale(1)} to{transform:scale(1.15)} }
-        .cat-btn { padding:6px 13px; border-radius:20px; border:1.5px solid #e8d5b8; background:white; color:#8a6a50; font-size:12px; font-weight:600; transition:all .18s; }
-        .cat-btn:hover { border-color:#c68a2e; color:#6b3d1e; }
-        .cat-btn.on { background:#d62b23; border-color:#d62b23; color:white; }
-        .tab { flex:1; display:flex; align-items:center; justify-content:center; gap:5px; padding:11px 6px; background:transparent; color:rgba(253,246,236,.55); font-size:13px; font-weight:600; border-bottom:3px solid transparent; margin-bottom:-3px; transition:all .2s; }
-        .tab:hover { color:rgba(253,246,236,.9); background:rgba(255,255,255,.06); }
-        .tab.on { color:#f0c070; border-bottom-color:#d62b23; }
-        .fc { width:100%; max-width:400px; height:290px; position:relative; cursor:pointer; perspective:1000px; }
-        .fc-side { position:absolute; inset:0; border-radius:22px; padding:28px 24px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; backface-visibility:hidden; transition:transform .5s ease; box-shadow:0 8px 32px rgba(107,61,30,.15); }
-        .fc-front { background:white; border:2px solid #e8d5b8; transform:rotateY(0); }
-        .fc-back  { background:linear-gradient(135deg,#16100a,#261a0e); border:2px solid #c68a2e; transform:rotateY(180deg); }
-        .fc.flipped .fc-front { transform:rotateY(-180deg); }
-        .fc.flipped .fc-back  { transform:rotateY(0); }
-        .qopt { padding:13px 10px; border-radius:12px; border:2px solid #e8d5b8; background:#f7ede0; font-size:13px; font-weight:600; transition:all .18s; display:flex; flex-direction:column; gap:2px; }
-        .qopt:hover:not(:disabled) { border-color:#c68a2e; background:rgba(198,138,46,.1); transform:translateY(-2px); }
-        .correct { background:rgba(34,197,94,.14)!important; border-color:#22c55e!important; color:#166534; }
-        .wrong   { background:rgba(214,43,35,.1)!important; border-color:#d62b23!important; color:#d62b23; }
-        .dim     { opacity:.4; }
-        @media(max-width:500px){ .grid{grid-template-columns:repeat(2,1fr);} }
-      `}</style>
-
-      {/* HEADER */}
-      <div style={{ background:"linear-gradient(135deg,#16100a,#261a0e)", borderBottom:"3px solid #c68a2e", position:"sticky", top:0, zIndex:100, boxShadow:"0 4px 24px rgba(0,0,0,.35)" }}>
-        <div style={{ maxWidth:920, margin:"0 auto", padding:"14px 16px 0" }}>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
-            <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-              <span style={{ fontSize:36 }}>🏕️</span>
-              <div>
-                <div style={{ fontSize:18, fontWeight:900, color:"#f0c070", direction:"ltr" }}>QashqAI Voice</div>
-                <div style={{ fontSize:12, color:"rgba(253,246,236,.85)", fontWeight:600 }}>۱۰۰ کلمه قشقایی</div>
-              </div>
-            </div>
-            <div style={{ background:"rgba(198,138,46,.18)", border:"1.5px solid #c68a2e", borderRadius:20, padding:"6px 16px", fontSize:16, fontWeight:800, color:"#f0c070" }}>⭐ {score}</div>
-          </div>
-          {!voicesReady && (
-            <div style={{ fontSize:11, color:"#f0c070", marginBottom:6, textAlign:"center" }}>⏳ در حال بارگذاری صدا...</div>
-          )}
-          <div style={{ display:"flex", borderTop:"1px solid rgba(198,138,46,.2)" }}>
-            {[["grid","📚","کلمات"],["flash","✏️","فلش‌کارت"],["quiz","🎯","آزمون"]].map(([id,ic,lb]) => (
-              <button key={id} className={`tab ${view===id?"on":""}`} onClick={()=>switchView(id)}><span>{ic}</span><span>{lb}</span></button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div style={{ maxWidth:920, margin:"0 auto", padding:"18px 14px 48px" }}>
-        {/* CATS */}
-        <div style={{ display:"flex", flexWrap:"wrap", gap:8, marginBottom:16, justifyContent:"flex-end" }}>
-          {cats.map(c => (
-            <button key={c} className={`cat-btn ${cat===c?"on":""}`} onClick={()=>switchCat(c)}>{c}</button>
-          ))}
-        </div>
-
-        {/* SEARCH */}
-        {view==="grid" && (
-          <div style={{ display:"flex", alignItems:"center", background:"white", border:"1.5px solid #e8d5b8", borderRadius:12, padding:"0 14px", marginBottom:14 }}>
-            <span style={{ opacity:.5, fontSize:15 }}>🔍</span>
-            <input
-              value={search} onChange={e=>setSearch(e.target.value)}
-              placeholder="جستجو در ۴ زبان..."
-              style={{ flex:1, padding:"11px 8px", border:"none", outline:"none", fontFamily:"inherit", fontSize:14, background:"transparent", textAlign:"right", direction:"rtl" }}
-            />
-            {search && <button onClick={()=>setSearch("")} style={{ background:"none", color:"#8a6a50", fontSize:13 }}>✕</button>}
-          </div>
-        )}
-
-        {/* ── GRID ── */}
-        {view==="grid" && (
-          <>
-            <div style={{ fontSize:12, fontWeight:700, color:"#8a6a50", marginBottom:12, textAlign:"left" }}>{filtered.length} کلمه</div>
-            <div className="grid">
-              {filtered.map(w => (
-                <div key={w.id} className="wcard">
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
-                    <span style={{ fontSize:28 }}>{w.e}</span>
-                    <button className={`speak-btn ${speaking===w.id?"on":""}`} onClick={e=>doSpeak(w,e)}>
-                      {speaking===w.id ? "🔊" : "▶"}
-                    </button>
-                  </div>
-                  <div style={{ fontSize:20, fontWeight:900, color:"#d62b23", marginBottom:2 }}>{w.q}</div>
-                  <div style={{ fontSize:11, color:"#8a6a50", fontStyle:"italic", direction:"ltr", marginBottom:8 }}>[{w.p}]</div>
-                  <div style={{ height:1, background:"#e8d5b8", marginBottom:7 }} />
-                  {[["فا",w.fa,"rgba(214,43,35,.1)","#d62b23"],["DE",w.de,"rgba(107,61,30,.1)","#6b3d1e"],["EN",w.en,"rgba(198,138,46,.12)","#c68a2e"]].map(([lb,val,bg,clr])=>(
-                    <div key={lb} style={{ display:"flex", alignItems:"center", gap:5, marginBottom:3, justifyContent:"flex-end" }}>
-                      <span style={{ fontSize:10, fontWeight:800, padding:"2px 5px", borderRadius:5, background:bg, color:clr }}>{lb}</span>
-                      <span style={{ fontSize:11, fontWeight:500 }}>{val}</span>
-                    </div>
-                  ))}
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {/* ── FLASHCARD ── */}
-        {view==="flash" && cur && (
-          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:20, padding:"16px 0" }}>
-            <div style={{ fontSize:13, fontWeight:700, color:"#8a6a50" }}>{idx+1} / {filtered.length}</div>
-            <div className={`fc ${flipped?"flipped":""}`} onClick={()=>setFlipped(f=>!f)}>
-              <div className="fc-side fc-front">
-                <div style={{ fontSize:50 }}>{cur.e}</div>
-                <div style={{ fontSize:42, fontWeight:900, color:"#d62b23" }}>{cur.q}</div>
-                <div style={{ fontSize:14, color:"#8a6a50", fontStyle:"italic", direction:"ltr" }}>[{cur.p}]</div>
-                <div style={{ fontSize:11, color:"#8a6a50", marginTop:6 }}>برای ترجمه کلیک کن 👆</div>
-              </div>
-              <div className="fc-side fc-back">
-                <div style={{ fontSize:40 }}>{cur.e}</div>
-                <div style={{ fontSize:26, fontWeight:900, color:"#f0c070", marginBottom:6 }}>{cur.q}</div>
-                {[["فارسی",cur.fa,"rgba(214,43,35,.3)","#ff8080"],["Deutsch",cur.de,"rgba(198,138,46,.3)","#f0c070"],["English",cur.en,"rgba(255,255,255,.15)","#fdf6ec"]].map(([lb,val,bg,clr])=>(
-                  <div key={lb} style={{ display:"flex", justifyContent:"space-between", alignItems:"center", background:"rgba(255,255,255,.08)", borderRadius:10, padding:"8px 12px", gap:10, width:"100%" }}>
-                    <span style={{ fontSize:10, fontWeight:800, padding:"3px 8px", borderRadius:6, background:bg, color:clr }}>{lb}</span>
-                    <span style={{ fontSize:14, fontWeight:600, color:"#fdf6ec" }}>{val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div style={{ display:"flex", gap:10, alignItems:"center", flexWrap:"wrap", justifyContent:"center" }}>
-              <button onClick={prev} style={{ padding:"11px 22px", borderRadius:50, border:"1.5px solid #e8d5b8", background:"white", fontWeight:700, fontSize:14, boxShadow:"0 3px 12px rgba(107,61,30,.1)" }}>→</button>
-              <button className={`speak-btn ${speaking===cur.id?"on":""}`}
-                onClick={e=>doSpeak(cur,e)}
-                style={{ width:"auto", height:"auto", borderRadius:50, padding:"11px 24px", fontSize:14, fontWeight:700, background: speaking===cur.id?"#d62b23":"#d62b23", color:"white", border:"none", boxShadow:"0 4px 16px rgba(214,43,35,.3)", minWidth:130 }}>
-                {speaking===cur.id ? "🔊 در حال پخش..." : "🔊 بشنو!"}
-              </button>
-              <button onClick={next} style={{ padding:"11px 22px", borderRadius:50, border:"1.5px solid #e8d5b8", background:"white", fontWeight:700, fontSize:14, boxShadow:"0 3px 12px rgba(107,61,30,.1)" }}>←</button>
-            </div>
-          </div>
-        )}
-
-        {/* ── QUIZ ── */}
-        {view==="quiz" && cur && (
-          <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:16, padding:"12px 0" }}>
-            <div style={{ display:"flex", justifyContent:"space-between", width:"100%", maxWidth:460, background:"rgba(198,138,46,.1)", border:"1.5px solid #c68a2e", borderRadius:12, padding:"10px 18px", fontSize:14, fontWeight:600, color:"#6b3d1e" }}>
-              <span>امتیاز: <strong style={{color:"#d62b23"}}>{score}</strong> ⭐</span>
-              <span>{idx+1} / {filtered.length}</span>
-            </div>
-            <div style={{ width:"100%", maxWidth:460, background:"white", border:"2px solid #e8d5b8", borderRadius:22, padding:"28px 20px 22px", boxShadow:"0 8px 32px rgba(107,61,30,.14)", textAlign:"center", display:"flex", flexDirection:"column", alignItems:"center", gap:10 }}>
-              <div style={{ fontSize:54 }}>{cur.e}</div>
-              <div style={{ fontSize:13, color:"#8a6a50" }}>این کلمه قشقایی چه معنایی دارد؟</div>
-              <div style={{ fontSize:40, fontWeight:900, color:"#d62b23" }}>{cur.q}</div>
-              <div style={{ fontSize:12, color:"#8a6a50", fontStyle:"italic", direction:"ltr" }}>[{cur.p}]</div>
-              <button className={`speak-btn ${speaking===cur.id?"on":""}`}
-                onClick={e=>doSpeak(cur,e)}
-                style={{ width:"auto", height:"auto", borderRadius:20, padding:"7px 20px", fontSize:13, fontWeight:700 }}>
-                {speaking===cur.id ? "🔊 در حال پخش..." : "🔊 بشنو"}
-              </button>
-              <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, width:"100%", marginTop:4 }}>
-                {opts.map(opt => {
-                  let cls = "qopt";
-                  if (answered) {
-                    if (opt.id===cur.id) cls+=" correct";
-                    else if (opt.id===chosen) cls+=" wrong";
-                    else cls+=" dim";
-                  }
-                  return (
-                    <button key={opt.id} className={cls} onClick={()=>answer(opt)} disabled={answered}>
-                      <span style={{fontSize:15,fontWeight:800}}>{opt.fa}</span>
-                      <span style={{fontSize:11,color:"#8a6a50"}}>{opt.en}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              {answered && (
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:10, marginTop:4 }}>
-                  {chosen===cur.id
-                    ? <span style={{fontSize:15,fontWeight:800,color:"#22c55e"}}>✅ آفرین! درسته</span>
-                    : <span style={{fontSize:14,fontWeight:700,color:"#d62b23"}}>❌ جواب: {cur.fa}</span>
-                  }
-                  <button onClick={next} style={{ padding:"12px 30px", borderRadius:50, background:"#d62b23", color:"white", fontSize:14, fontWeight:800, boxShadow:"0 4px 16px rgba(214,43,35,.3)" }}>کلمه بعدی ←</button>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div style={{ background:"#16100a", color:"rgba(253,246,236,.5)", textAlign:"center", padding:"20px 16px", fontSize:12, lineHeight:2, borderTop:"3px solid #c68a2e" }}>
-        <div>QashqAI Voice © 2025 — حفاظت دیجیتال از زبان قشقایی</div>
-        <div><a href="https://qashqaivoice.com" target="_blank" rel="noopener noreferrer" style={{color:"#f0c070",textDecoration:"none"}}>qashqaivoice.com</a></div>
-      </div>
-    </div>
-  );
+  renderCards(filtered);
 }
-```
 
+renderCards(words);
+</script>
+</body>
+</html>
